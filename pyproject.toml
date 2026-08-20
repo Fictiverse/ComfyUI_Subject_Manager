@@ -2,7 +2,7 @@
 name = "comfyui_subject_manager"
 description = "Subject manager, subject crafter, asset manager"
 readme = "README.md"
-version = "1.0.1"
+version = "1.1.0"
 license = { file = "LICENSE.txt" }
 dependencies = []
 
