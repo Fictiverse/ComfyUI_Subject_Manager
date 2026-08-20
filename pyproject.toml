@@ -1,0 +1,14 @@
+[project]
+name = "comfyui_subject_manager"
+description = "Subject manager, subject crafter, asset manager"
+readme = "README.md"
+version = "1.0.0"
+license = { file = "LICENSE.txt" }
+dependencies = []
+
+[project.urls]
+Repository = "https://github.com/Fictiverse/ComfyUI_Subject_Manager"
+
+[tool.comfy]
+PublisherId = "fictiverse"
+DisplayName = "🗂️ Subject Manager"
