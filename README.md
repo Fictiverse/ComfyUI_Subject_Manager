@@ -70,7 +70,6 @@ Featuring an in-graph DOM interface directly inside the ComfyUI canvas, it build
 ```bash
 cd ComfyUI/custom_nodes/
 git clone https://github.com/Fictiverse/ComfyUI_Subject_Manager.git
-pip install -r requirements.txt
 ```
 
 ---
