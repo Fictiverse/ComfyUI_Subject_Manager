@@ -9,6 +9,8 @@
 Featuring an in-graph DOM interface directly inside the ComfyUI canvas, it builds structured libraries of **Characters**, **Objects**, and **Environments** while automatically generating synchronized prompt templates.
 
 <img width="1694" height="718" alt="capture" src="https://github.com/user-attachments/assets/a2d08b8d-2988-4595-8653-7effc3418530" />
+<img width="813" height="798" alt="20260820_182158" src="https://github.com/user-attachments/assets/30506c87-b527-436a-8a44-c18c843de343" />
+
 
 ---
 
