@@ -4,7 +4,7 @@
 [![Platform](https://img.shields.io/badge/Platform-Windows%20%7C%20Linux%20%7C%20macOS-green.svg)]()
 [![License: GPL v3](https://img.shields.io/badge/License-GPLv3-blue.svg)](https://www.gnu.org/licenses/gpl-3.0)
 
-**Subject Manager** is a multimodal visual asset management suite for **ComfyUI**. It organizes, trims, and injects references (**Images, Audio, Video, and Prompts**) into multimodal generative models (such as **MiniMax / Hailuo Video-01 Full-Reference**, Wan 2.1, CogVideoX, LTX-Video).
+**Subject Manager** is a multimodal visual asset management suite for **ComfyUI**. It organizes, trims, and injects references (**Images, Audio, Video, and Prompts**) into multimodal generative models (Designed primarily for **MiniMax H3** but can easily be adapted to other formats.).
 
 Featuring an in-graph DOM interface directly inside the ComfyUI canvas, it builds structured libraries of **Characters**, **Objects**, and **Environments** while automatically generating synchronized prompt templates.
 
