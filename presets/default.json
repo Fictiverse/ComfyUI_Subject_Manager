@@ -1,0 +1,174 @@
+{
+  "sections": [
+    {
+      "key": "subjects",
+      "label": "Characters",
+      "enabled": true,
+      "randomizeOnQueue": false,
+      "color": "amber"
+    },
+    {
+      "key": "objects",
+      "label": "Objects",
+      "enabled": true,
+      "randomizeOnQueue": false,
+      "color": "red"
+    },
+    {
+      "key": "scenes",
+      "label": "Scenes",
+      "enabled": true,
+      "randomizeOnQueue": false,
+      "color": "green"
+    }
+  ],
+  "categories": {
+    "subjects": [
+      {
+        "id": "s_ujjeivemt1oj4nt",
+        "name": "Fic",
+        "subjectType": "character",
+        "prompt": "<Picture 1> defines <Subject 1>'s anatomical height, silhouette proportions, and physical build, and exact garment design, fabric weave, and color scheme, and multi-angle 360\u00b0 turnaround 3D consistency.\n<Subject 1> must remain fully_preserved with consistent visual and physical continuity throughout.",
+        "enablePrompt": true,
+        "images": [
+          "072b1d50d5bf022850c6c69b7a87c6cf.jpg"
+        ],
+        "imageStates": [
+          true
+        ],
+        "imageTags": [
+          [
+            "outfit",
+            "body",
+            "turnaround"
+          ]
+        ],
+        "enableImages": true,
+        "audio": null,
+        "audioTags": [
+          "voice_timbre",
+          "dialogue_sync"
+        ],
+        "enableAudio": true,
+        "video": null,
+        "videoTags": [
+          "acting",
+          "facial_acting"
+        ],
+        "enableVideo": true,
+        "selected": true,
+        "allowRandom": true,
+        "alwaysOn": false
+      },
+      {
+        "id": "s_mev1lsnmt1onju2",
+        "name": "Bob",
+        "subjectType": "character",
+        "prompt": "<Picture 1> defines <Subject 1>'s facial structure, eye landmarks, and skin tone, and exact garment design, fabric weave, and color scheme.\n<Subject 1> must remain fully_preserved with consistent visual and physical continuity throughout.",
+        "enablePrompt": true,
+        "images": [
+          "a4c458cf4d646b849a1afc99a3c2a02f.jpg"
+        ],
+        "imageStates": [
+          true
+        ],
+        "imageTags": [
+          [
+            "face_id",
+            "outfit"
+          ]
+        ],
+        "enableImages": true,
+        "audio": null,
+        "audioTags": [
+          "voice_timbre",
+          "dialogue_sync"
+        ],
+        "enableAudio": true,
+        "video": null,
+        "videoTags": [
+          "acting",
+          "facial_acting"
+        ],
+        "enableVideo": true,
+        "selected": true,
+        "allowRandom": true,
+        "alwaysOn": false
+      }
+    ],
+    "objects": [
+      {
+        "id": "s_obfjbz1mt1pfkra",
+        "name": "Car",
+        "subjectType": "object",
+        "prompt": "<Picture 1> establishes <Subject 1> (Car)'s overall 3D geometric shape, proportions, and silhouette, and surface material texture, reflectivity, color, and finish.\n<Subject 1> (Car) must remain fully_preserved with consistent visual and physical continuity throughout.",
+        "enablePrompt": true,
+        "images": [
+          "16faae43e54a63e81bf59abfc371beb6.jpg"
+        ],
+        "imageStates": [
+          true
+        ],
+        "imageTags": [
+          [
+            "form_3d",
+            "texture_wear"
+          ]
+        ],
+        "enableImages": true,
+        "audio": null,
+        "audioTags": [
+          "foley"
+        ],
+        "enableAudio": true,
+        "video": null,
+        "videoTags": [
+          "handling"
+        ],
+        "enableVideo": true,
+        "selected": true,
+        "allowRandom": true,
+        "alwaysOn": false
+      }
+    ],
+    "scenes": [
+      {
+        "id": "s_iqs0q4rmt1pbniz",
+        "name": "Village",
+        "subjectType": "scene",
+        "prompt": "<Picture 1> establishes <Subject 1> (Village)'s architectural layout and spatial composition, and atmospheric lighting direction, volumetric contrast, and color mood.\n<Subject 1> (Village) must remain fully_preserved with consistent visual and physical continuity throughout.",
+        "enablePrompt": true,
+        "images": [
+          "419814f8725b4355195a48e69c667f60.jpg"
+        ],
+        "imageStates": [
+          true
+        ],
+        "imageTags": [
+          [
+            "layout",
+            "lighting"
+          ]
+        ],
+        "enableImages": true,
+        "audio": null,
+        "audioTags": [
+          "room_tone",
+          "ambient"
+        ],
+        "enableAudio": true,
+        "video": null,
+        "videoTags": [
+          "camera_path",
+          "env_dynamics"
+        ],
+        "enableVideo": true,
+        "selected": true,
+        "allowRandom": true,
+        "alwaysOn": false
+      }
+    ]
+  },
+  "viewMode": "grid",
+  "previewMode": "names"
+}
