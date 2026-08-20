@@ -62,7 +62,7 @@ function highlightPromptText(raw) {
     .replace(/</g, "&lt;")
     .replace(/>/g, "&gt;");
 
-  // Balises <Subject ...> ou <Character ...> (et leur nom entre parenthèses)
+  // Balises <Subject ...> ou <Character ...> (avec nom éventuel)
   escaped = escaped.replace(
     /&lt;\s*(subject|character)[^&>]*&gt;(?:\s*\([^)]*\))?/gi,
     '<span class="hl-tag-subj">$&</span>'
@@ -761,7 +761,7 @@ app.registerExtension({
         reader.readAsText(f);
       });
 
-      // Import ZIP Bundle (Sécurisé avec gestion d'erreurs propre)
+      // Import ZIP Bundle (Masqué)
       const importZipInput = document.createElement("input");
       importZipInput.type = "file";
       importZipInput.accept = ".zip,application/zip";
@@ -778,7 +778,6 @@ app.registerExtension({
 
         try {
           const res = await fetch("/subject_manager/import_bundle", { method: "POST", body: formData });
-          
           let json = null;
           const textResponse = await res.text();
           try {
@@ -798,6 +797,202 @@ app.registerExtension({
           alert("Import error: " + e.message);
         }
       });
+
+      // =========================================================================
+      // GESTIONNAIRE UNIVERSEL DE DRAG & DROP GLOBAL SUR SM-ROOT
+      // =========================================================================
+      async function handleGlobalDroppedFiles(files) {
+        if (!files || !files.length) return;
+
+        // 1. CAS : ARCHIVE PRESET BUNDLE (.ZIP)
+        const zipFile = Array.from(files).find((f) => f.name.toLowerCase().endsWith(".zip"));
+        if (zipFile) {
+          const formData = new FormData();
+          formData.append("file", zipFile);
+          try {
+            const res = await fetch("/subject_manager/import_bundle", { method: "POST", body: formData });
+            const json = await res.json();
+            if (!res.ok || !json.ok) throw new Error(json.error || "Zip import failed");
+            await refreshPresetSelect(json.name);
+            await loadPresetByName(json.name);
+            alert(`Preset bundle "${json.name}" successfully imported (${json.media_count} media files added).`);
+          } catch (e) {
+            alert("Bundle import error: " + e.message);
+          }
+          return;
+        }
+
+        // 2. CAS : FICHIER JSON (SECTION OU PRESET COMPLET)
+        const jsonFile = Array.from(files).find((f) => f.name.toLowerCase().endsWith(".json"));
+        if (jsonFile) {
+          const reader = new FileReader();
+          reader.onload = async () => {
+            try {
+              const parsed = JSON.parse(reader.result);
+              if (parsed.smSection) {
+                importSection(parsed);
+              } else if (Array.isArray(parsed.sections) && typeof parsed.categories === "object") {
+                node.smData = sanitizeData(parsed);
+                state.activeTab = node.smData.sections.length ? node.smData.sections[0].key : null;
+                persist();
+                renderAll();
+              } else {
+                alert("Unrecognized JSON format.");
+              }
+            } catch (e) {
+              alert("JSON read error: " + e.message);
+            }
+          };
+          reader.readAsText(jsonFile);
+          return;
+        }
+
+        // 3. CAS : GROUPE DE FICHIERS MÉDIAS (IMAGES / AUDIO / VIDÉO) -> NOUVELLE CARTE
+        const imageFiles = [];
+        const audioFiles = [];
+        const videoFiles = [];
+
+        const ALLOWED_IMG = ["jpg", "jpeg", "png", "webp", "bmp"];
+        const ALLOWED_AUD = ["mp3", "wav", "flac", "aac", "ogg", "m4a"];
+        const ALLOWED_VID = ["mp4", "webm", "mkv", "mov", "avi"];
+
+        for (const f of files) {
+          const ext = f.name.split(".").pop().toLowerCase();
+          if (f.type.startsWith("image/") || ALLOWED_IMG.includes(ext)) {
+            imageFiles.push(f);
+          } else if (f.type.startsWith("audio/") || ALLOWED_AUD.includes(ext)) {
+            audioFiles.push(f);
+          } else if (f.type.startsWith("video/") || ALLOWED_VID.includes(ext)) {
+            videoFiles.push(f);
+          }
+        }
+
+        if (!imageFiles.length && !audioFiles.length && !videoFiles.length) {
+          return;
+        }
+
+        async function getFilePath(file) {
+          if (file.path) return file.path;
+          const upRes = await uploadMediaFile(file);
+          return upRes.path || upRes.filename;
+        }
+
+        try {
+          const uploadedImgs = [];
+          for (const f of imageFiles.slice(0, 4)) {
+            uploadedImgs.push(await getFilePath(f));
+          }
+
+          let uploadedAud = null;
+          if (audioFiles.length > 0) {
+            uploadedAud = await getFilePath(audioFiles[0]);
+          }
+
+          let uploadedVid = null;
+          if (videoFiles.length > 0) {
+            uploadedVid = await getFilePath(videoFiles[0]);
+          }
+
+          if (!state.activeTab || !node.smData.categories[state.activeTab]) {
+            if (!node.smData.sections.length) {
+              node.smData.sections.push({ key: "subjects", label: "Subjects", enabled: true, randomizeOnQueue: false, color: null });
+              node.smData.categories["subjects"] = [];
+            }
+            state.activeTab = node.smData.sections[0].key;
+          }
+
+          const type = "character";
+          const config = COMBINATORIAL_CONFIG[type] || COMBINATORIAL_CONFIG.character;
+
+          const rawName = files[0].name.replace(/\.[^/.]+$/, "").replace(/[_\-\.]+/g, " ").trim();
+          const cleanName = rawName.charAt(0).toUpperCase() + rawName.slice(1);
+
+          const newCard = {
+            id: uid(),
+            name: cleanName || getNextSubjectName(node.smData.categories),
+            subjectType: type,
+            prompt: "",
+            enablePrompt: true,
+            images: uploadedImgs,
+            imageStates: uploadedImgs.map(() => true),
+            imageTags: uploadedImgs.map((_, idx) => [...(config.imageDefaultPreset[idx] || config.imageDefaultPreset[0])]),
+            enableImages: true,
+            audio: uploadedAud ? { file: uploadedAud, trimStart: 0, trimEnd: 0 } : null,
+            audioTags: [...config.audioDefault],
+            enableAudio: true,
+            video: uploadedVid ? { file: uploadedVid, trimStart: 0, trimEnd: 0 } : null,
+            videoTags: [...config.videoDefault],
+            enableVideo: true,
+            selected: false,
+            allowRandom: true,
+            alwaysOn: false,
+          };
+
+          newCard.prompt = generatePromptTemplate(type, newCard);
+          node.smData.categories[state.activeTab].push(newCard);
+
+          persist();
+          renderAll();
+        } catch (err) {
+          console.error("Drop media error:", err);
+          alert("Failed to create subject card from dropped files: " + err.message);
+        }
+      }
+
+      // --- ÉCOUTEURS DRAG & DROP SUR LA RACINE DU NŒUD ---
+      let rootDragCounter = 0;
+
+      function isEditing() {
+        return formEl && formEl.style.display !== "none";
+      }
+
+      root.ondragenter = (e) => {
+        if (isEditing()) return;
+        if (sectionDragSrc !== null || itemDragSrc !== null || itemSlotDragSrc !== null) return;
+        e.preventDefault();
+        rootDragCounter++;
+        root.classList.add("sm-root-drag-over");
+      };
+
+      root.ondragover = (e) => {
+        if (isEditing()) return;
+        if (sectionDragSrc !== null || itemDragSrc !== null || itemSlotDragSrc !== null) return;
+        e.preventDefault();
+        e.dataTransfer.dropEffect = "copy";
+        if (!root.classList.contains("sm-root-drag-over")) {
+          root.classList.add("sm-root-drag-over");
+        }
+      };
+
+      root.ondragleave = (e) => {
+        if (isEditing()) return;
+        e.preventDefault();
+        rootDragCounter--;
+        if (rootDragCounter <= 0 || !root.contains(e.relatedTarget)) {
+          rootDragCounter = 0;
+          root.classList.remove("sm-root-drag-over");
+        }
+      };
+
+      root.ondrop = async (e) => {
+        if (isEditing()) return;
+
+        e.preventDefault();
+        rootDragCounter = 0;
+        root.classList.remove("sm-root-drag-over"); // Éteint toujours le vert
+
+        if (sectionDragSrc !== null || itemDragSrc !== null || itemSlotDragSrc !== null) {
+          sectionDragSrc = null;
+          itemDragSrc = null;
+          itemSlotDragSrc = null;
+          return;
+        }
+
+        const files = e.dataTransfer && e.dataTransfer.files;
+        if (!files || files.length === 0) return;
+
+        await handleGlobalDroppedFiles(files);
+      };
 
       // Handlers
       function toggleRandomizeOnQueue(sec) {
@@ -1663,7 +1858,6 @@ app.registerExtension({
         formEl.className = "sm-form";
         formEl.innerHTML = "<div style='color:#888; padding:8px;'>Checking media files...</div>";
 
-        // Déclaration des éléments du formulaire en tête de fonction
         let promptInput = null;
         let promptBackdrop = null;
         let editorWrap = null;
@@ -1778,7 +1972,9 @@ app.registerExtension({
           currentData.prompt = generatePromptTemplate(currentData.subjectType, currentData);
           if (promptInput) {
             promptInput.value = currentData.prompt;
-            promptBackdrop.innerHTML = highlightPromptText(currentData.prompt);
+            if (promptBackdrop) {
+              promptBackdrop.innerHTML = highlightPromptText(currentData.prompt);
+            }
           }
         }
 
@@ -1925,6 +2121,7 @@ app.registerExtension({
         }
 
         formEl.ondragenter = (e) => {
+          if (itemSlotDragSrc !== null) return;
           e.preventDefault();
           formDragCounter++;
           formEl.classList.add("sm-form-drag-over");
@@ -1940,6 +2137,7 @@ app.registerExtension({
         };
 
         formEl.ondragleave = (e) => {
+          if (itemSlotDragSrc !== null) return;
           e.preventDefault();
           formDragCounter--;
           if (formDragCounter <= 0 || !formEl.contains(e.relatedTarget)) {
@@ -1948,9 +2146,10 @@ app.registerExtension({
         };
 
         formEl.ondrop = async (e) => {
+          if (itemSlotDragSrc !== null) return;
           e.preventDefault();
           clearAllDragStyles();
-          const files = e.dataTransfer.files;
+          const files = e.dataTransfer && e.dataTransfer.files;
           if (files && files.length) {
             try {
               await processDroppedFiles(files);
@@ -2406,7 +2605,7 @@ app.registerExtension({
           togglePromptBtn.style.color = isTxtOn ? "var(--sm-green-text-bright)" : "#777";
           togglePromptBtn.title = isTxtOn ? "Prompt active (click to mute text)" : "Prompt muted (click to activate text)";
           lbl.style.color = isTxtOn ? "var(--sm-text-faint)" : "#777";
-          if (promptInput) promptInput.style.opacity = isTxtOn ? "1" : "0.45";
+          if (editorWrap) editorWrap.style.opacity = isTxtOn ? "1" : "0.45";
         };
 
         leftPromptHead.appendChild(togglePromptBtn);
@@ -2494,8 +2693,6 @@ app.registerExtension({
         editorWrap.appendChild(promptInput);
         formBodyEl.appendChild(editorWrap);
         formEl.appendChild(formBodyEl);
-
-        
       }
 
       function closeForm() {
@@ -2531,18 +2728,47 @@ app.registerExtension({
 
       function attachDragReorder(el, index) {
         el.draggable = true;
-        el.addEventListener("dragstart", (e) => { itemDragSrc = index; e.dataTransfer.effectAllowed = "move"; });
-        el.addEventListener("dragover", (e) => { e.preventDefault(); el.classList.add("drag-over"); });
-        el.addEventListener("dragleave", () => el.classList.remove("drag-over"));
-        el.addEventListener("drop", (e) => {
-          e.preventDefault();
+        el.addEventListener("dragstart", (e) => { 
+          itemDragSrc = index; 
+          e.dataTransfer.effectAllowed = "move";
+          e.dataTransfer.setData("text/plain", `${index}`);
+          e.stopPropagation(); 
+        });
+
+        el.addEventListener("dragover", (e) => { 
+          // Si ce n'est PAS un déplacement de carte interne, on laisse passer pour le drag global de fichiers !
+          if (itemDragSrc === null) return;
+          e.preventDefault(); 
+          e.stopPropagation();
+          el.classList.add("drag-over"); 
+        });
+
+        el.addEventListener("dragleave", (e) => {
+          if (itemDragSrc === null) return;
+          e.stopPropagation();
           el.classList.remove("drag-over");
-          if (itemDragSrc === null || itemDragSrc === index) return;
+        });
+
+        el.addEventListener("drop", (e) => {
+          // Si ce n'est PAS un déplacement interne, on laisse le drop monter à root pour créer le sujet
+          if (itemDragSrc === null) return;
+
+          e.preventDefault();
+          e.stopPropagation();
+          el.classList.remove("drag-over");
+
+          if (itemDragSrc === index) {
+            itemDragSrc = null;
+            return;
+          }
+
           const arr = activeItems();
           const [moved] = arr.splice(itemDragSrc, 1);
           arr.splice(index, 0, moved);
           itemDragSrc = null;
-          persist(); renderList(); updatePreview();
+          persist(); 
+          renderList(); 
+          updatePreview();
         });
       }
 

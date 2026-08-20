@@ -77,6 +77,12 @@
   box-sizing: border-box; 
 }
 
+/* Feedback visuel lors du Drag & Drop global sur tout le nœud */
+.sm-root.sm-root-drag-over {
+  outline: 2px dashed var(--sm-green-border) !important;
+  outline-offset: -3px;
+  background: #142017 !important;
+}
 
 /* ==========================================================================
    2. LAYOUT PRINCIPAL
@@ -771,6 +777,13 @@
   font-size: 11px;
   padding: 3px 5px;
   border-radius: 0;
+}
+
+/* Feedback visuel lors du Drag & Drop dans le formulaire d'édition */
+.sm-form.sm-form-drag-over {
+  outline: 2px dashed var(--sm-green-border) !important;
+  outline-offset: -3px;
+  background: #142017 !important;
 }
 
 /* Éditeur de Prompt avec Coloration Syntaxique */
